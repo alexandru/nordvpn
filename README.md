@@ -7,6 +7,9 @@
     <a href="https://github.com/alexandru/nordvpn/actions/workflows/deploy.yml"><img src="https://github.com/alexandru/nordvpn/actions/workflows/deploy.yml/badge.svg?branch=main"/></a>
 </p>
 
+> [!IMPORTANT]
+> This project was forked from <https://github.com/bubuntux/nordvpn>
+
 Official `NordVPN` client in a docker container; it makes routing traffic through the `NordVPN` network easy and secure with an integrated iptables kill switch.
 
 # How to use this image
