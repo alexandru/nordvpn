@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -e
+
+ADDRESS="10.5.0.2/32"
+
+RESPONSE="$(curl -s --user "token:$TOKEN" "https://api.nordvpn.com/v1/users/services/credentials")"
+PRIVATE_KEY="$(echo "$RESPONSE" | jq -r '.nordlynx_private_key')"
+
+WG_DUMP="$(wg show nordlynx dump)"
+PEER_PUBLIC_KEY=""
+ENDPOINT=""
+while read -r line; do
+  endpoint=$(echo "$line" | awk '{print $3}')
+  if [[ ! "$endpoint" =~ ^127\.0\.0\.1: ]]; then
+    PEER_PUBLIC_KEY=$(echo "$line" | awk '{print $1}')
+    ENDPOINT="$endpoint"
+    break
+  fi
+done < <(echo "$WG_DUMP" | tail -n +2)
+
+if [ -z "$PEER_PUBLIC_KEY" ] || [ -z "$ENDPOINT" ]; then
+  echo "No valid NordLynx peer with a non-local endpoint found." >&2
+  exit 1
+fi
+
+ALLOWED_IPS="0.0.0.0/0, ::/0"
+DNS="103.86.96.100, 103.86.99.100"
+LISTEN_PORT="$(wg show nordlynx listen-port)"
+
+cat <<EOF
+[Interface]
+PrivateKey = $PRIVATE_KEY
+ListenPort = $LISTEN_PORT
+Address = $ADDRESS
+DNS = $DNS
+
+[Peer]
+PublicKey = $PEER_PUBLIC_KEY
+AllowedIPs = $ALLOWED_IPS
+Endpoint = $ENDPOINT
+# PersistentKeepalive = 25
+EOF
